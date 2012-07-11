@@ -13,6 +13,8 @@
 #longest singular duration spent in high coherence
 #power spectrum VLF LF HF histogram IBI/60 Hz
 #frequency band VLF 0-0.04 Hz, LF 0.04 - 0.15 Hz, HF 0.15 0.5 Hz
+#######
+
 library(RSQLite)
 
 #sqlite db location is system dependent
