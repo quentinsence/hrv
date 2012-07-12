@@ -7,9 +7,7 @@
 #bioconduction PROcess peaks function
 #split screen to get "banking" (45 degrees in curves)
 #export function for Kubios
-#fix final score (currently reading only 1 byte)
 
-#longest singular duration spent in high coherence
 #power spectrum VLF LF HF histogram IBI/60 Hz
 #frequency band VLF 0-0.04 Hz, LF 0.04 - 0.15 Hz, HF 0.15 0.5 Hz
 #######
@@ -68,24 +66,24 @@ h$Endian <- factor(h$Endian,levels=c(0,1),labels=c("big","little"))
 #I do not know how to stop unlist recycling all sessions in 1 so I'm using "for"
 for (n in 1:dim(h)[1]) {
 	#convert hex interbeat intervals to decimal bpm
-	h$bpm[n] <- list(60*1000/readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4))
-  #cumulate each hex interbeat interval to decimal seconds
-  h$timeIBI[n] <- list(0.001 * cumsum(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4)))
+    h$LiveIBI[n] <- list(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4))
+	h$bpm[n] <- list(60*1000/unlist(h$LiveIBI[n]))
+    #cumulate each hex interbeat interval to decimal seconds
+    h$timeIBI[n] <- list(0.001 * cumsum(unlist(h$LiveIBI[n])))
 	#convert back to integers
 	h$AccumZoneScore[n] <- list(readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4))
 	h$ZoneScore[n] <- list(readBin(unlist(h$ZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$ZoneScore[n]))/4))
-    h$maxhicoherence <- h$sessiontime[n]
-	#rle computes the lenghts of runs of equal values, we are looking for the longest run of "2"
-	                    * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE]))
-	                    / length(unlist(h$ZoneScore[n]))
+    #longest singular duration spent in high coherence
+    #rle computes the lenghts of runs of equal values, we are looking for the longest run of "2"
+    h$maxhicoherence <- h$sessiontime[n] * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE])) / length(unlist(h$ZoneScore[n]))
 }
 
 #recalc FinalScore as decimal
 h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unlist(x))] )
 
 hrvplot <- function(n=1) {
-pulse <- 60*1000/readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4)
-pulset <- 0.001 * cumsum(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4))
+pulse <- 60*1000/ unlist(h$LiveIBI[n])
+pulset <- 0.001 * cumsum( unlist(h$LiveIBI[n]) )
 #score <- readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4)
 
 par(mfrow=c(2,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
