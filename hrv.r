@@ -74,6 +74,10 @@ for (n in 1:dim(h)[1]) {
 	#convert back to integers
 	h$AccumZoneScore[n] <- list(readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4))
 	h$ZoneScore[n] <- list(readBin(unlist(h$ZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$ZoneScore[n]))/4))
+    h$maxhicoherence <- h$sessiontime[n]
+	#rle computes the lenghts of runs of equal values, we are looking for the longest run of "2"
+	                    * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE]))
+	                    / length(unlist(h$ZoneScore[n]))
 }
 
 #recalc FinalScore as decimal
