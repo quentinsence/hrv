@@ -3,10 +3,10 @@
 # 60*1000/LiveIBI gives BPM
 
 #TODO
+#export all samples in ascii RR data
 #plot "The Zone" lines
 #bioconduction PROcess peaks function
 #split screen to get "banking" (45 degrees in curves)
-#export function for Kubios
 
 #fix final score (currently reading only 1 byte)
 #longest singular duration spent in high coherence
@@ -19,8 +19,7 @@ library(RSQLite)
 #sqlite db location is system dependent
 user <- Sys.info()['user']
 
-#define a local user in the local.ini file to override the user path
-#user <- 'my.local.user'
+#define a local user in the local.r file to override the user name and path
 
 if(file.exists('local.r')) {
 	source("local.r")
@@ -125,4 +124,13 @@ plot(ts(h$FinalScore),ylab="Accumulated Score",main="final accumulated score by 
 
 #plot(h$PctHigh ~ h$date,type="l",col="green")
 #lines(h$PctMedium ~ h$date,type="l",col="blue")
+
+#export 1 session as ascii RR data file, readable by kubios
+	hrvexport <- function(x) {
+	#include h$date in the filename
+	write(unlist(h$LiveIBI[x])
+			,paste("emwave.",strftime(h$date[1],format="%Y-%M-%dT%X"),'.dat',sep="")
+			,ncolumns=1)
+}
+
 
