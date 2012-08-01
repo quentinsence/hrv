@@ -129,7 +129,7 @@ plot(ts(h$FinalScore),ylab="Accumulated Score",main="final accumulated score by 
 	hrvexport <- function(x) {
 	#include h$date in the filename
 	write(unlist(h$LiveIBI[x])
-			,paste("emwave.",strftime(h$date[x],format="%Y-%M-%dT%X"),'.dat',sep="")
+			,paste("emwave.",strftime(h$date[x],format="%Y-%m-%dT%X"),'.dat',sep="")
 			,ncolumns=1)
 }
 
