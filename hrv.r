@@ -80,7 +80,7 @@ for (n in 1:dim(h)[1]) {
     h$timeIBI[n] <- list(0.001 * cumsum(unlist(h$LiveIBI[n])))
     #longest singular duration spent in high coherence
     #rle computes the lenghts of runs of equal values, we are looking for the longest run of "2"
-    h$maxhicoherence <- h$sessiontime[n] * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE])) / length(unlist(h$ZoneScore[n]))
+    h$maxhicoherence[n] <- h$sessiontime[n] * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE])) / length(unlist(h$ZoneScore[n]))
 }
 
 #recalc FinalScore as decimal
@@ -108,7 +108,7 @@ cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$Pct
 }
 
 #start by displaying summary of all sessions
-par(mfrow=c(3,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
+par(mfrow=c(4,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
 barplot(t(cbind(h$PctLow,h$PctMedium,h$PctHigh))
         ,col=c('red','blue','green')
         ,xlab=as.numeric(h$ChallengeLevel)
@@ -122,11 +122,13 @@ plot(ts(h$ChallengeLevel),ylab="Challenge Level",xlab="session",main="level by s
 #scores
 plot(ts(h$FinalScore),ylab="Accumulated Score",main="final accumulated score by session")
 
+plot(ts(h$maxhicoherence),ylab="time (seconds)",main="longest time spent in high coherence by session")
+
 #plot(h$PctHigh ~ h$date,type="l",col="green")
 #lines(h$PctMedium ~ h$date,type="l",col="blue")
 
 #export 1 session as ascii RR data file, readable by kubios
-	hrvexport <- function(x) {
+hrvexport <- function(x) {
 	#include h$date in the filename
 	write(unlist(h$LiveIBI[x])
 			,paste("emwave.",strftime(h$date[x],format="%Y-%m-%dT%X"),'.dat',sep="")
