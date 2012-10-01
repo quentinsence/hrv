@@ -88,46 +88,49 @@ h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unl
 h$Weekday <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
 
 hrvplot <- function(n=1) {
-pulse  <- unlist(h$bpm[n])
-pulset <- unlist(h$timeIBI[n])
-#score <- readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4)
-
-par(mfrow=c(2,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
-plot(pulse ~ pulset,xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
-plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
-#plot(unlist(h$bpm[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
-#plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
-
-#LEGEND
-cat('Start',strftime(h$date[n],format="%x %X"),'\n')
-cat('End  ',strftime(h$end[n],format="%x %X"),'\n')
-cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'sec','\n')
-cat('mean HR:',as.integer(mean(pulse)),'bpm\n')
-cat('final score',h$FinalScore[n],'\n')
-cat('difficulty level',h$ChallengeLevel[n],'\n')
-cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$PctMedium[n]),'/',as.integer(h$PctHigh[n]),'\n')
+    pulse  <- unlist(h$bpm[n])
+    pulset <- unlist(h$timeIBI[n])
+    #score <- readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4)
+    
+    par(mfrow=c(2,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
+    plot(pulse ~ pulset,xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
+    plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
+    #plot(unlist(h$bpm[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
+    #plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
+    
+    #LEGEND
+    cat('Start',strftime(h$date[n],format="%x %X"),'\n')
+    cat('End  ',strftime(h$end[n],format="%x %X"),'\n')
+    cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'sec','\n')
+    cat('mean HR:',as.integer(mean(pulse)),'bpm\n')
+    cat('final score',h$FinalScore[n],'\n')
+    cat('difficulty level',h$ChallengeLevel[n],'\n')
+    cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$PctMedium[n]),'/',as.integer(h$PctHigh[n]),'\n')
 }
 
-#start by displaying summary of all sessions
-par(mfrow=c(4,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
-barplot(t(cbind(h$PctLow,h$PctMedium,h$PctHigh))
-        ,col=c('red','blue','green')
-        ,xlab=as.numeric(h$ChallengeLevel)
-        ,ylab="%"
-        ,main="coherence ratio by session"
-	    ,legend=c('Low','Medium','High')
-        ,args.legend = list(x = "topleft")
-       )
 
-#scores plot in black and difficulty levels in grey
-plot(ts(h$FinalScore),ylab="Accumulated Score",main="final accumulated score by session")
-lines(ts(h$Level*max(h$FinalScore)/4),ylab="Challenge Level",xlab="session",main="level by session",col="grey")
-
-plot(ts(h$maxhicoherence),ylab="time (seconds)",main="longest time spent in high coherence by session")
-boxplot(h$FinalScore ~ h$Weekday,horizontal=TRUE,main="final score by day of week (0=Sunday)")
-
-#plot(h$PctHigh ~ h$date,type="l",col="green")
-#lines(h$PctMedium ~ h$date,type="l",col="blue")
+hrvsummary <- function() {
+    #start by displaying summary of all sessions
+    par(mfrow=c(4,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
+    barplot(t(cbind(h$PctLow,h$PctMedium,h$PctHigh))
+            ,col=c('red','blue','green')
+            ,xlab=as.numeric(h$ChallengeLevel)
+            ,ylab="%"
+            ,main="coherence ratio by session"
+    	    ,legend=c('Low','Medium','High')
+            ,args.legend = list(x = "topleft")
+           )
+    
+    #scores plot in black and difficulty levels in grey
+    plot(ts(h$FinalScore),ylab="Accumulated Score",main="final accumulated score by session")
+    lines(ts(h$Level*max(h$FinalScore)/4),ylab="Challenge Level",xlab="session",main="level by session",col="grey")
+    
+    plot(ts(h$maxhicoherence),ylab="time (seconds)",main="longest time spent in high coherence by session")
+    boxplot(h$FinalScore ~ h$Weekday,horizontal=TRUE,main="final score by day of week (0=Sunday)")
+    
+    #plot(h$PctHigh ~ h$date,type="l",col="green")
+    #lines(h$PctMedium ~ h$date,type="l",col="blue")
+}
 
 #export session(s) as ascii RR data file, readable by kubios
 hrvexport <- function(x1="") {
