@@ -87,6 +87,24 @@ h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unl
 
 h$Weekday <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
 
+########## PLOTS
+
+hrvweekday <- function() {
+    par(mfrow=c(7,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
+    #calculate week number for each entry so all timeseries by weekday are aligned
+    h$Week <- as.integer(1 + (h$IBIStartTime - h$IBIStartTime[1]) / (86400*7))
+
+    #build a matrix week by weekday and fill in NA when scores are missing
+    hw <- data.frame(h$Week,h$Weekday,h$FinalScore)
+    mflat <- rbind(hw,data.frame(expand.grid(h.Week=unique(h$Week),h.Weekday=unique(h$Weekday)),h.FinalScore=NA))
+    mflat <- mflat[order(mflat$h.Week,mflat$h.Weekday),]
+    #todo: remove duplicate NA, coerce as.matrix and plot :)
+    
+    #ScoreMatrix <- matrix(m2,nrow=max(h$Weekday),ncol=max(h$Week))
+    #set threshold at 200 points
+    #horizonplot(ts(ScoreMatrix),layout=c(7,1),origin=200)
+}
+
 hrvplot <- function(n=1) {
     pulse  <- unlist(h$bpm[n])
     pulset <- unlist(h$timeIBI[n])
