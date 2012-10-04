@@ -65,7 +65,7 @@ h$Endian <- factor(h$Endian,levels=c(0,1),labels=c("big","little"))
 #foreach session
 #I do not know how to stop unlist recycling all sessions in 1 so I'm using "for"
 for (n in 1:dim(h)[1]) {
-	  #convert hex interbeat intervals to decimal bpm
+	  #convert hex interbeat intervals to decimal BPM
     #cumulate each hex interbeat interval to decimal seconds
     h$timeIBI[n] <- list(0.001 * cumsum(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4)))
 	  #convert back to integers
@@ -74,7 +74,7 @@ for (n in 1:dim(h)[1]) {
 
     h$LiveIBI[n] <- list(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4))
     #convert interbeat intervals to beats per minute [exclude zeroes to avoid Inf]
-    h$bpm[n] <- list(60*1000/unlist(h$LiveIBI[n])[unlist(h$LiveIBI[n])>0])
+    h$BPM[n] <- list(60*1000/unlist(h$LiveIBI[n])[unlist(h$LiveIBI[n])>0])
     #cumulate each hex interbeat interval to decimal seconds
     h$timeIBI[n] <- list(0.001 * cumsum(unlist(h$LiveIBI[n])[unlist(h$LiveIBI[n])>0]))
     #longest singular duration spent in high coherence
@@ -82,6 +82,7 @@ for (n in 1:dim(h)[1]) {
     h$maxhicoherence[n] <- h$sessiontime[n] * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE])) / length(unlist(h$ZoneScore[n]))
 }
 
+h$AverageBPM <- sapply( h$BPM,mean )
 #recalc FinalScore as decimal
 h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unlist(x))] )
 
@@ -97,30 +98,36 @@ hrvweekday <- function() {
     #build a matrix week by weekday and fill in NA when scores are missing
     hw <- data.frame(h$Week,h$Weekday,h$FinalScore)
     mflat <- rbind(hw,data.frame(expand.grid(h.Week=unique(h$Week),h.Weekday=unique(h$Weekday)),h.FinalScore=NA))
-    mflat <- mflat[order(mflat$h.Week,mflat$h.Weekday),]
-    #todo: remove duplicate NA, coerce as.matrix and plot :)
     
-    #ScoreMatrix <- matrix(m2,nrow=max(h$Weekday),ncol=max(h$Week))
+    #sort by descending score, lower scores and NA on the same week,weekday will be duplicates
+    mflat <- mflat[order(mflat$h.FinalScore,decreasing=TRUE),]
+    #remove duplicate (week,weekday), keep only the highest score of the (week,weekday)
+    mflat <- mflat[!duplicated(cbind(mflat$h.Week,mflat$h.Weekday)),]
+    
+    #sort back to chronological order
+    mflat <- mflat[order(mflat$h.Week,mflat$h.Weekday),]
+
+    ScoreMatrix <- matrix(mflat$h.FinalScore,nrow=7,ncol=max(h$Week))
     #set threshold at 200 points
-    #horizonplot(ts(ScoreMatrix),layout=c(7,1),origin=200)
+    horizonplot(ts(t(ScoreMatrix)),layout=c(7,1),origin=200)
 }
 
 hrvplot <- function(n=1) {
-    pulse  <- unlist(h$bpm[n])
+    pulse  <- unlist(h$BPM[n])
     pulset <- unlist(h$timeIBI[n])
     #score <- readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4)
     
     par(mfrow=c(2,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
     plot(pulse ~ pulset,xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
     plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
-    #plot(unlist(h$bpm[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
+    #plot(unlist(h$BPM[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
     #plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
     
     #LEGEND
     cat('Start',strftime(h$date[n],format="%x %X"),'\n')
     cat('End  ',strftime(h$end[n],format="%x %X"),'\n')
     cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'sec','\n')
-    cat('mean HR:',as.integer(mean(pulse)),'bpm\n')
+    cat('mean HR:',as.integer(mean(pulse)),'BPM\n')
     cat('final score',h$FinalScore[n],'\n')
     cat('difficulty level',h$ChallengeLevel[n],'\n')
     cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$PctMedium[n]),'/',as.integer(h$PctHigh[n]),'\n')
@@ -129,7 +136,7 @@ hrvplot <- function(n=1) {
 
 hrvsummary <- function() {
     #start by displaying summary of all sessions
-    par(mfrow=c(4,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
+    par(mfrow=c(5,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
     barplot(t(cbind(h$PctLow,h$PctMedium,h$PctHigh))
             ,col=c('red','blue','green')
             ,xlab=as.numeric(h$ChallengeLevel)
@@ -144,6 +151,7 @@ hrvsummary <- function() {
     lines(ts(h$Level*max(h$FinalScore)/4),ylab="Challenge Level",xlab="session",main="level by session",col="grey")
     
     plot(ts(h$maxhicoherence),ylab="time (seconds)",main="longest time spent in high coherence by session")
+    plot(ts(h$AverageBPM),ylab="beats per minute",main="Average BPM by session")
     boxplot(h$FinalScore ~ h$Weekday,horizontal=TRUE,main="final score by day of week (0=Sunday)")
     
     #plot(h$PctHigh ~ h$date,type="l",col="green")
