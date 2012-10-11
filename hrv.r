@@ -119,6 +119,8 @@ hrvplot <- function(n=1) {
     
     par(mfrow=c(2,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
     plot(pulse ~ pulset,xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
+    #highlight low coherence sequences
+    abline(v=5*(which(ts(unlist(h$ZoneScore[n]) == 0))-1),col="red")
     plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
     #plot(unlist(h$BPM[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
     #plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
