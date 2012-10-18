@@ -53,40 +53,36 @@ dbDisconnect(con)
 #h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) as.numeric(unlist(x)[length(unlist(x))-3]) )
 #lappy readBin(unlist(h$AccumZoneScore[10]),"int",size=4,endian="little",n=length(unlist(h$AccumZoneScore[10]))/4)
 
-h$PctLow <- 100 - h$PctMedium - h$PctHigh
-h$date <- as.POSIXct(h$IBIStartTime,origin="1970-01-01")
-h$end  <- as.POSIXct(h$IBIEndTime,origin="1970-01-01")
-h$sessiontime <- h$IBIEndTime - h$IBIStartTime
-h$Level <- h$ChallengeLevel
+h$PctLow         <- 100 - h$PctMedium - h$PctHigh
+h$date           <- as.POSIXct(h$IBIStartTime,origin="1970-01-01")
+h$end            <- as.POSIXct(h$IBIEndTime,origin="1970-01-01")
+h$sessiontime    <- h$IBIEndTime - h$IBIStartTime
+h$Level          <- h$ChallengeLevel
 h$ChallengeLevel <- factor(h$ChallengeLevel,levels=c(1,2,3,4),labels=c("Low","Medium","High","Highest"))
-h$Endian <- factor(h$Endian,levels=c(0,1),labels=c("big","little"))
+h$Endian         <- factor(h$Endian,levels=c(0,1),labels=c("big","little"))
 
+#convert from 4 bytes hexadecimal format to integer
+h$AccumZoneScore <- lapply(h$AccumZoneScore,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
+h$ZoneScore      <- lapply(h$ZoneScore     ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
+h$LiveIBI        <- lapply(h$LiveIBI       ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
 
-#foreach session
-#I do not know how to stop unlist recycling all sessions in 1 so I'm using "for"
-for (n in 1:dim(h)[1]) {
-	  #convert hex interbeat intervals to decimal BPM
-    #cumulate each hex interbeat interval to decimal seconds
-    h$timeIBI[n] <- list(0.001 * cumsum(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4)))
-	  #convert back to integers
-	  h$AccumZoneScore[n] <- list(readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4))
-	  h$ZoneScore[n] <- list(readBin(unlist(h$ZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$ZoneScore[n]))/4))
+#convert interbeat intervals to beats per minute [exclude zeroes to avoid Inf]
+h$BPM            <- lapply(h$LiveIBI,function(x) 60*1000/x[x>0] )
+#cumulate each hex interbeat interval to decimal seconds [exclude zeroes to match BPM lists]
+h$timeIBI        <- lapply(h$LiveIBI,function(x) 0.001*cumsum(x[x>0]) )
+#longest singular duration spent in high coherence
+#rle computes the lenghts of runs of equal values
+#we are looking for the longest run of "2" i.e. high coherence
+#0 = low coherence, 1 = medium coherence
+h$maxhicoherence <- sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
+#converts length of high coherence runs to seconds
+h$maxhicoherence <- h$sessiontime * h$maxhicoherence / length(h$maxhicoherence)
 
-    h$LiveIBI[n] <- list(readBin(unlist(h$LiveIBI[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$LiveIBI[n]))/4))
-    #convert interbeat intervals to beats per minute [exclude zeroes to avoid Inf]
-    h$BPM[n] <- list(60*1000/unlist(h$LiveIBI[n])[unlist(h$LiveIBI[n])>0])
-    #cumulate each hex interbeat interval to decimal seconds
-    h$timeIBI[n] <- list(0.001 * cumsum(unlist(h$LiveIBI[n])[unlist(h$LiveIBI[n])>0]))
-    #longest singular duration spent in high coherence
-    #rle computes the lenghts of runs of equal values, we are looking for the longest run of "2"
-    h$maxhicoherence[n] <- h$sessiontime[n] * with(rle(unlist(h$ZoneScore[n])==2),max(lengths[!!values==TRUE])) / length(unlist(h$ZoneScore[n]))
-}
-
-h$AverageBPM <- sapply( h$BPM,mean )
+h$AverageBPM     <- sapply( h$BPM, mean )
 #recalc FinalScore as decimal
-h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unlist(x))] )
+h$FinalScore     <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unlist(x))] )
 
-h$Weekday <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
+h$Weekday        <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
 
 ########## PLOTS
 
