@@ -47,12 +47,6 @@ dbClearResult(rs)
 dbDisconnect(con)
 #############
 
-#final scores
-#as.numeric(unlist(h$AccumZoneScore[1])[length(unlist(h$AccumZoneScore[1]))-3])
-#won't work if value > 255, must have hex values in group of 4
-#h$FinalScore <- sapply( h$AccumZoneScore, FUN = function(x) as.numeric(unlist(x)[length(unlist(x))-3]) )
-#lappy readBin(unlist(h$AccumZoneScore[10]),"int",size=4,endian="little",n=length(unlist(h$AccumZoneScore[10]))/4)
-
 h$PctLow         <- 100 - h$PctMedium - h$PctHigh
 h$date           <- as.POSIXct(h$IBIStartTime,origin="1970-01-01")
 h$end            <- as.POSIXct(h$IBIEndTime,origin="1970-01-01")
@@ -79,8 +73,7 @@ h$maxhicoherence <- sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!
 h$maxhicoherence <- h$sessiontime * h$maxhicoherence / length(h$maxhicoherence)
 
 h$AverageBPM     <- sapply( h$BPM, mean )
-#recalc FinalScore as decimal
-h$FinalScore     <- sapply( h$AccumZoneScore, FUN = function(x) unlist(x)[length(unlist(x))] )
+h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
 
 h$Weekday        <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
 
