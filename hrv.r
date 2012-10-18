@@ -17,10 +17,7 @@ library(RSQLite)
 user <- Sys.info()['user']
 
 #define a local user in the local.r file to override the user name and path
-
-if(file.exists('local.r')) {
-	source("local.r")
-}
+if(file.exists('local.r')) {source("local.r")}
 
 if( Sys.info()['sysname'] == "Windows") {
 	emdb <- paste('C:/Documents and Settings/',user,'/My\ Documents/emWave/emwave.emdb',sep="")
@@ -31,8 +28,8 @@ if( Sys.info()['sysname'] == "Windows") {
 
 #if emwave directory cannot be found then assume we have a copy of the db in the working directory
 if(!file.exists(emdb)) {
-  cat(emdb,' not found, using a local copy\n')
-	emdb <- 'emwave.emdb'
+    cat(emdb,' not found, using a local copy\n')
+    emdb <- 'emwave.emdb'
 }
 ############# CONNECT & LOAD
 m <- dbDriver("SQLite")
@@ -43,7 +40,7 @@ dbListTables(con)
 rs <- dbSendQuery(con, "select * from PrimaryData order by IBIStartTime")
 h <- fetch(rs, n=-1)
 dbClearResult(rs)
- 
+
 dbDisconnect(con)
 #############
 
@@ -52,8 +49,15 @@ h$date           <- as.POSIXct(h$IBIStartTime,origin="1970-01-01")
 h$end            <- as.POSIXct(h$IBIEndTime,origin="1970-01-01")
 h$sessiontime    <- h$IBIEndTime - h$IBIStartTime
 h$Level          <- h$ChallengeLevel
-h$ChallengeLevel <- factor(h$ChallengeLevel,levels=c(1,2,3,4),labels=c("Low","Medium","High","Highest"))
-h$Endian         <- factor(h$Endian,levels=c(0,1),labels=c("big","little"))
+h$ChallengeLevel <- factor( h$ChallengeLevel
+                            ,levels=1:4
+                            ,labels=c("Low","Medium","High","Highest"))
+h$Endian         <- factor( h$Endian
+                            ,levels=0:1
+                            ,labels=c("big","little"))
+h$Weekday        <- factor( strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
+                            ,levels=0:6
+                            ,labels=c('Sun','Mon','Tue','Wed','Thu','Fri','Sat'))
 
 #convert from 4 bytes hexadecimal format to integer
 h$AccumZoneScore <- lapply(h$AccumZoneScore,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
@@ -74,8 +78,6 @@ h$maxhicoherence <- h$sessiontime * h$maxhicoherence / length(h$maxhicoherence)
 
 h$AverageBPM     <- sapply( h$BPM, mean )
 h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
-
-h$Weekday        <- strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-01")),format="%w")
 
 ########## PLOTS
 
@@ -143,7 +145,7 @@ hrvsummary <- function() {
     
     plot(ts(h$maxhicoherence),ylab="time (seconds)",main="longest time spent in high coherence by session")
     plot(ts(h$AverageBPM),ylab="beats per minute",main="Average BPM by session")
-    boxplot(h$FinalScore ~ h$Weekday,horizontal=TRUE,main="final score by day of week (0=Sunday)")
+    boxplot(h$FinalScore ~ h$Weekday,horizontal=TRUE,main="final score by day of week")
     
     #plot(h$PctHigh ~ h$date,type="l",col="green")
     #lines(h$PctMedium ~ h$date,type="l",col="blue")
