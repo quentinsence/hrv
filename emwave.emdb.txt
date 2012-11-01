@@ -1,0 +1,122 @@
+The emwave.emdb SQLite file is composed of a "main" database with 3 tables:
+.databases
+main
+
+.tables
+Client        PrimaryData   VersionTable
+
+.schema Client
+CREATE TABLE Client ( ClientRecID INTEGER, 
+                      FirstName TEXT, 
+                      LastName TEXT, 
+                      DOB INTEGER, 
+                      Sex INTEGER, 
+                      Settings BLOB, 
+                      DateCreated INTEGER, 
+                      DateUpdated INTEGER, 
+                      DefaultChallengeLevel INTEGER, 
+                      Email TEXT, 
+                      Password TEXT, 
+                      ClientGroupId TEXT, 
+                      TimeCorrection FLOAT(0), 
+                      BRecent INTEGER, 
+                      PRIMARY KEY (ClientRecID) UNIQUE (FirstName,LastName) ON CONFLICT IGNORE );
+
+.schema PrimaryData
+CREATE TABLE PrimaryData (TestRecID INTEGER PRIMARY KEY AUTOINCREMENT, 
+                          ClientRecID INTEGER NOT NULL, 
+                          DateCreated INTEGER, 
+                          LastModified INTEGER, 
+                          Title TEXT, 
+                          Comment TEXT, 
+                          CoreModuleVersion TEXT, 
+                          SensorVersion TEXT, 
+                          ChallengeLevel INTEGER, 
+                          PulseStartTime INTEGER, 
+                          PulseEndTime INTEGER, 
+                          IBIStartTime INTEGER, 
+                          IBIEndTime INTEGER, 
+                          ZoneEPStartTime INTEGER, 
+                          ZoneEPEndTime INTEGER, 
+                          PulseIntervalTime FLOAT, 
+                          IBIIntervalTime FLOAT, 
+                          EntrainmentIntervalTime FLOAT, 
+                          Pulse BLOB, 
+                          SampledIBI BLOB, 
+                          LiveIBI BLOB, 
+                          ArtifactFlag BLOB, 
+                          AccumZoneScore BLOB,  
+                          ZoneScore BLOB, 
+                          EntrainmentParameter BLOB, 
+                          PctMedium FLOAT(4), 
+                          PctHigh FLOAT(4), 
+                          Free2 BLOB, 
+                          Free3 BLOB, 
+                          Endian INTEGER, 
+                          Tags BLOB, 
+                          e2Starttime INTEGER, 
+                          e2DevID TEXT, 
+                          e2FWVer TEXT, 
+                          PowerSpectrum BLOB);
+
+.schema VersionTable
+CREATE TABLE VersionTable (Version INTEGER);
+
+---
+table Client
+ClientRecID INTEGER, 
+FirstName TEXT, 
+LastName TEXT, 
+DOB INTEGER, 
+Sex INTEGER, 
+Settings BLOB, 
+DateCreated INTEGER, 
+DateUpdated INTEGER, 
+DefaultChallengeLevel INTEGER, 
+Email TEXT, 
+Password TEXT, 
+ClientGroupId TEXT, 
+TimeCorrection FLOAT(0), 
+BRecent INTEGER,
+
+---
+table VersionTable
+Version INTEGER 
+
+---
+table PrimaryData
+TestRecID INTEGER PRIMARY KEY AUTOINCREMENT, 
+ClientRecID INTEGER NOT NULL, 
+DateCreated INTEGER, 
+LastModified INTEGER, 
+Title TEXT, 
+Comment TEXT, 
+CoreModuleVersion TEXT, 
+SensorVersion TEXT, 
+ChallengeLevel INTEGER, 
+PulseStartTime INTEGER, 
+PulseEndTime INTEGER, 
+IBIStartTime INTEGER, 
+IBIEndTime INTEGER, 
+ZoneEPStartTime INTEGER, 
+ZoneEPEndTime INTEGER, 
+PulseIntervalTime FLOAT, 
+IBIIntervalTime FLOAT, 
+EntrainmentIntervalTime FLOAT, 
+Pulse BLOB, 
+SampledIBI BLOB, 
+LiveIBI BLOB, 
+ArtifactFlag BLOB, 
+AccumZoneScore BLOB,  
+ZoneScore BLOB, 
+EntrainmentParameter BLOB, 
+PctMedium FLOAT(4), 
+PctHigh FLOAT(4), 
+Free2 BLOB, 
+Free3 BLOB, 
+Endian INTEGER, 
+Tags BLOB, 
+e2Starttime INTEGER, 
+e2DevID TEXT, 
+e2FWVer TEXT, 
+PowerSpectrum BLOB
