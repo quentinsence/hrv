@@ -102,7 +102,7 @@ ZoneEPStartTime INTEGER, unix epoch time, start recording, can be a few seconds 
 ZoneEPEndTime INTEGER, unix epoch time, end recording, usually identical to IBIEndTime
 PulseIntervalTime FLOAT, ???
 IBIIntervalTime FLOAT, frequency in Hz for sampling
-EntrainmentIntervalTime FLOAT, ?
+EntrainmentIntervalTime FLOAT, interval of sampled time (ms) to calculate Entrainment Parameter, ZoneScore, AccumZoneScore
 Pulse BLOB, always NULL?
 SampledIBI BLOB, 4 digits hexadecimal series, interbeat intervals in milliseconds
 LiveIBI BLOB, 4 digits hexadecimal series, ?
