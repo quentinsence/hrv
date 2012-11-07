@@ -3,7 +3,9 @@
 #see emwave.emdb.txt for details on the SQLite tables fields
 
 #TODO
-#plot "The Zone" lines
+#why 1000 * h$sessiontime / sapply(h$AccumZoneScore,length) does not always equal h$EntrainmentIntervalTime
+#fix h$EntrainmentIntervalTime or h$sessiontime?
+#hrvsummary option, highest challenges only
 #split screen to get "banking" (45 degrees in curves)
 
 #power spectrum VLF LF HF histogram IBI/60 Hz
@@ -103,21 +105,28 @@ hrvweekday <- function() {
     horizonplot(ts(t(ScoreMatrix)),layout=c(7,1),origin=200)
 }
 
-hrvplot <- function(n=1) {
-    pulse  <- unlist(h$BPM[n])
-    pulset <- unlist(h$timeIBI[n])
-    #score <- readBin(unlist(h$AccumZoneScore[n]),"int",size=4,endian=h$Endian,n=length(unlist(h$AccumZoneScore[n]))/4)
+hrvplot <- function(n=dim(h)[1]) {
+    #plot last session by default
+  
+    #The Zone - low bound
+    xl <- c(120,300) * length(unlist(h$AccumZoneScore[n])) / h$sessiontime[n]
+    #* 1000 / h$EntrainmentIntervalTime[77]
+    yl <- c(20,60)
+    #The Zone - high bound
+    xh <- c(60,300)  * length(unlist(h$AccumZoneScore[n])) / h$sessiontime[n]
+    #* 1000 / h$EntrainmentIntervalTime[77]
+    yh <- c(26,120)
     
     par(mfrow=c(3,1),mai=c(0.4,0.4,0.2,0.2),lab=c(10,10,7))
-    plot(pulse ~ pulset,xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
+    plot(unlist(h$BPM[n]) ~ unlist(h$timeIBI[n]),xlab="time (s)",ylab="mean Heart Rate (BPM)",type ="l")
     #highlight low coherence sequences
     abline(v=5*(which(ts(unlist(h$ZoneScore[n]) == 0))-1),col="red")
     plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
+    abline(coef=lm(yl~xl)$coef,col="grey")
+    abline(coef=lm(yh~xh)$coef,col="grey")
     plot(ts(unlist(h$EntrainmentParameter[n])),xlab="time",ylab="Entrainment Parameter",type ="l")
-    #plot(unlist(h$BPM[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
-    #plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
     
-    #LEGEND
+    #SESSION DETAILS
     cat('Start',strftime(h$date[n],format="%x %X"),'\n')
     cat('End  ',strftime(h$end[n],format="%x %X"),'\n')
     cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'s','\n')
@@ -125,9 +134,8 @@ hrvplot <- function(n=1) {
     cat('final score',h$FinalScore[n],'\n')
     cat('difficulty level',h$ChallengeLevel[n],'\n')
     cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$PctMedium[n]),'/',as.integer(h$PctHigh[n]),'\n')
-    cat('longest duration spent in high coherence',h$maxhicoherence[n],'s\n')
+    cat('longest duration spent in high coherence',as.integer(h$maxhicoherence[n]/60),'min',h$maxhicoherence[n] %% 60,'s\n')
 }
-
 
 hrvsummary <- function() {
     #start by displaying summary of all sessions
