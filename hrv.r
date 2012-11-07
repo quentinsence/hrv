@@ -73,9 +73,8 @@ h$timeIBI        <- lapply(h$LiveIBI,function(x) 0.001*cumsum(x[x>0]) )
 #rle computes the lenghts of runs of equal values
 #we are looking for the longest run of "2" i.e. high coherence
 #0 = low coherence, 1 = medium coherence
-h$maxhicoherence <- sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
-#converts length of high coherence runs to seconds
-h$maxhicoherence <- h$sessiontime * h$maxhicoherence / length(h$maxhicoherence)
+#converts length of high coherence runs to seconds by multiplying by Entrainment sampling interval (ms * 0.001 = seconds)
+h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime * sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
 
 h$AverageBPM     <- sapply( h$BPM, mean )
 h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
@@ -114,18 +113,19 @@ hrvplot <- function(n=1) {
     #highlight low coherence sequences
     abline(v=5*(which(ts(unlist(h$ZoneScore[n]) == 0))-1),col="red")
     plot(ts(unlist(h$AccumZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
-    plot(ts(unlist(h$EntrainmentParameter[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
+    plot(ts(unlist(h$EntrainmentParameter[n])),xlab="time",ylab="Entrainment Parameter",type ="l")
     #plot(unlist(h$BPM[n]) ~ unlist(h$timeIBI[n]),xlab="time",ylab="mean Heart Rate (BPM)",type ="l")
     #plot(ts(unlist(h$ZoneScore[n])),xlab="time",ylab="Accumulated Coherence Score",type ="l")
     
     #LEGEND
     cat('Start',strftime(h$date[n],format="%x %X"),'\n')
     cat('End  ',strftime(h$end[n],format="%x %X"),'\n')
-    cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'sec','\n')
+    cat('session time',as.integer(h$sessiontime[n]/60),'min',h$sessiontime[n] %% 60,'s','\n')
     cat('mean HR:',as.integer(mean(pulse)),'BPM\n')
     cat('final score',h$FinalScore[n],'\n')
     cat('difficulty level',h$ChallengeLevel[n],'\n')
     cat('Coherence Ratio Low/Med/High%',as.integer(h$PctLow[n]),'/',as.integer(h$PctMedium[n]),'/',as.integer(h$PctHigh[n]),'\n')
+    cat('longest duration spent in high coherence',h$maxhicoherence[n],'s\n')
 }
 
 
