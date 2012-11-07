@@ -5,7 +5,6 @@
 #TODO
 #why 1000 * h$sessiontime / sapply(h$AccumZoneScore,length) does not always equal h$EntrainmentIntervalTime
 #fix h$EntrainmentIntervalTime or h$sessiontime?
-#hrvsummary option, highest challenges only
 #split screen to get "banking" (45 degrees in curves)
 
 #power spectrum VLF LF HF histogram IBI/60 Hz
@@ -137,8 +136,17 @@ hrvplot <- function(n=dim(h)[1]) {
     cat('longest duration spent in high coherence',as.integer(h$maxhicoherence[n]/60),'min',h$maxhicoherence[n] %% 60,'s\n')
 }
 
-hrvsummary <- function() {
-    #start by displaying summary of all sessions
+hrvsummary <- function(level="") {
+    #display summary of key metrics for all sessions
+  
+    #convert from integer to level factor
+    if(!is.na(levels(h$ChallengeLevel)[level])) { level <- levels(h$ChallengeLevel)[level] }
+
+    if(level %in% levels(h$ChallengeLevel)) {
+      #option to subset to one unique level
+      #e.g. we are only interested to see sessions at "highest" challenge level for fairer comparison
+      h <- subset(h, h$ChallengeLevel == level)
+    }
     par(mfrow=c(5,1),mai=c(0.4,0.7,0.2,0.2),lab=c(10,10,7))
     barplot(t(cbind(h$PctLow,h$PctMedium,h$PctHigh))
             ,col=c('red','blue','green')
