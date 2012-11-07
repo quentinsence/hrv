@@ -1,10 +1,9 @@
 #load and analyse emwave.emdb data
-#sqlite emdb file is composed of 3 tables: Client PrimaryData VersionTable
+
+#see emwave.emdb.txt for details on the SQLite tables fields
 
 #TODO
-#export all samples in ascii RR data
 #plot "The Zone" lines
-#bioconduction PROcess peaks function
 #split screen to get "banking" (45 degrees in curves)
 
 #power spectrum VLF LF HF histogram IBI/60 Hz
@@ -59,11 +58,13 @@ h$Weekday        <- factor( strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-
                             ,levels=0:6
                             ,labels=c('Sun','Mon','Tue','Wed','Thu','Fri','Sat'))
 
-#convert from 4 bytes hexadecimal format to integer
+#convert lists from 4 bytes hexadecimal format to integer
+h$LiveIBI        <- lapply(h$LiveIBI       ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
+h$SampledIBI     <- lapply(h$SampledIBI    ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
+h$ArtifactFlag   <- lapply(h$ArtifactFlag  ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
 h$AccumZoneScore <- lapply(h$AccumZoneScore,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
 h$ZoneScore      <- lapply(h$ZoneScore     ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$LiveIBI        <- lapply(h$LiveIBI       ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-
+h$EntrainmentParameter <- lapply(h$EntrainmentParameter,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
 #convert interbeat intervals to beats per minute [exclude zeroes to avoid Inf]
 h$BPM            <- lapply(h$LiveIBI,function(x) 60*1000/x[x>0] )
 #cumulate each hex interbeat interval to decimal seconds [exclude zeroes to match BPM lists]
@@ -151,8 +152,8 @@ hrvsummary <- function() {
     #lines(h$PctMedium ~ h$date,type="l",col="blue")
 }
 
-#export session(s) as ascii RR data file, readable by kubios
 hrvexport <- function(x1="") {
+  #export session(s) as ascii RR data file, readable by Kubios and others
   x0 <- 1
 	#include h$date in the filename
   if(x1=="") {
