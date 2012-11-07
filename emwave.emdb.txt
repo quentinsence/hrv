@@ -85,38 +85,38 @@ Version INTEGER
 
 ---
 table PrimaryData
-TestRecID INTEGER PRIMARY KEY AUTOINCREMENT, 
-ClientRecID INTEGER NOT NULL, 
-DateCreated INTEGER, 
-LastModified INTEGER, 
-Title TEXT, 
-Comment TEXT, 
-CoreModuleVersion TEXT, 
-SensorVersion TEXT, 
-ChallengeLevel INTEGER, 
-PulseStartTime INTEGER, 
-PulseEndTime INTEGER, 
-IBIStartTime INTEGER, 
-IBIEndTime INTEGER, 
-ZoneEPStartTime INTEGER, 
-ZoneEPEndTime INTEGER, 
-PulseIntervalTime FLOAT, 
-IBIIntervalTime FLOAT, 
-EntrainmentIntervalTime FLOAT, 
-Pulse BLOB, 
-SampledIBI BLOB, 
-LiveIBI BLOB, 
-ArtifactFlag BLOB, 
-AccumZoneScore BLOB,  
-ZoneScore BLOB, 
-EntrainmentParameter BLOB, 
-PctMedium FLOAT(4), 
-PctHigh FLOAT(4), 
-Free2 BLOB, 
-Free3 BLOB, 
-Endian INTEGER, 
+TestRecID INTEGER PRIMARY KEY AUTOINCREMENT, record number
+ClientRecID INTEGER NOT NULL, client id matching Client.ClientRecID
+DateCreated INTEGER, unix epoch time
+LastModified INTEGER, unix epoch time
+Title TEXT, default NA
+Comment TEXT, default NA
+CoreModuleVersion TEXT, usually 4 digits integer
+SensorVersion TEXT, usually 2 digits integer
+ChallengeLevel INTEGER,  either 1,2,3,4 matching Low, Medium, High, Highest
+PulseStartTime INTEGER, always zero?
+PulseEndTime INTEGER, always zero?
+IBIStartTime INTEGER, unix epoch time, start recording
+IBIEndTime INTEGER, unix epoch time, end recording
+ZoneEPStartTime INTEGER, unix epoch time, start recording, can be a few seconds earlier than IBIStartTime
+ZoneEPEndTime INTEGER, unix epoch time, end recording, usually identical to IBIEndTime
+PulseIntervalTime FLOAT, ???
+IBIIntervalTime FLOAT, frequency in Hz for sampling
+EntrainmentIntervalTime FLOAT, ?
+Pulse BLOB, always NULL?
+SampledIBI BLOB, 4 digits hexadecimal series, interbeat intervals in milliseconds
+LiveIBI BLOB, 4 digits hexadecimal series, ?
+ArtifactFlag BLOB, 4 digits hexadecimal series, ?
+AccumZoneScore BLOB, 4 digits hexadecimal series, accumulated score
+ZoneScore BLOB, 4 digits hexadecimal series, 0 = low, 1 = medium, 2 = high
+EntrainmentParameter BLOB, 4 digits hexadecimal series, ??
+PctMedium FLOAT(4), percentage of time spent in medium coherence
+PctHigh FLOAT(4), percentage of time spent in high coherence
+Free2 BLOB, always 0?
+Free3 BLOB, always 0?
+Endian INTEGER, usually 1, little endian, used for hexadecimal time series
 Tags BLOB, 
 e2Starttime INTEGER, 
-e2DevID TEXT, 
-e2FWVer TEXT, 
-PowerSpectrum BLOB
+e2DevID TEXT, em2wave device id
+e2FWVer TEXT, Firmware version 
+PowerSpectrum BLOB, NULL
