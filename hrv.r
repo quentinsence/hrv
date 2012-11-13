@@ -12,6 +12,7 @@
 #######
 
 library(RSQLite)
+library(RHRV)
 
 #sqlite db location is system dependent
 user <- Sys.info()['user']
@@ -79,6 +80,9 @@ h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime * sapply(h$ZoneScore,funct
 
 h$AverageBPM     <- sapply( h$BPM, mean )
 h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
+
+##RHRV integration
+rr <- CreateHRVData(Verbose=TRUE)
 
 ########## PLOTS
 
@@ -185,4 +189,10 @@ hrvexport <- function(x1="") {
   }
 }
 
+LoadBeatEmwave <- function(HRVData, RecordName, scale = 1, verbose = NULL) {
+  #load HRVData from our own emwave import already in RAM
+}
 
+LoadBeatEMDB <- function(HRVData, RecordName, RecordPath = ".", scale = 1, verbose = NULL) {
+  #load HRVData from emwave.emdb file for RHRV support
+}
