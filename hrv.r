@@ -77,8 +77,8 @@ h$timeIBI	<- lapply(h$LiveIBI,function(x) 0.001*cumsum(x[x>0]) )
 #we are looking for the longest run of "2" i.e. high coherence
 #0 = low coherence, 1 = medium coherence
 #converts length of high coherence runs to seconds by multiplying by Entrainment sampling interval (ms * 0.001 = seconds)
-h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime 
-			  * sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
+h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime * 
+                            sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
 h$AverageBPM     <- sapply( h$BPM, mean )
 h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
 
