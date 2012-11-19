@@ -60,26 +60,33 @@ h$Weekday        <- factor( strftime((as.POSIXct(h$IBIStartTime,origin="1970-01-
                             ,levels=0:6
                             ,labels=c('Sun','Mon','Tue','Wed','Thu','Fri','Sat'))
 
-#convert lists from 4 bytes hexadecimal format to integer
-h$LiveIBI        <- lapply(h$LiveIBI       ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$SampledIBI     <- lapply(h$SampledIBI    ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$ArtifactFlag   <- lapply(h$ArtifactFlag  ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$AccumZoneScore <- lapply(h$AccumZoneScore,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$ZoneScore      <- lapply(h$ZoneScore     ,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
-h$EntrainmentParameter <- lapply(h$EntrainmentParameter,function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4))
+#convert timeseries lists from 4 bytes hexadecimal format to integer
+hex2int <- function(blob) { lapply(blob, function(x) readBin(x,"int",size=4,endian=h$Endian,n=length(x)/4)) }
+h$LiveIBI              <- hex2int(h$LiveIBI)
+h$SampledIBI           <- hex2int(h$SampledIBI)
+h$ArtifactFlag         <- hex2int(h$ArtifactFlag)
+h$AccumZoneScore       <- hex2int(h$AccumZoneScore)
+h$ZoneScore            <- hex2int(h$ZoneScore)
+h$EntrainmentParameter <- hex2int(h$EntrainmentParameter)
 #convert interbeat intervals to beats per minute [exclude zeroes to avoid Inf]
-h$BPM            <- lapply(h$LiveIBI,function(x) 60*1000/x[x>0] )
-#cumulate each hex interbeat interval to decimal seconds [exclude zeroes to match BPM lists]
-h$timeIBI        <- lapply(h$LiveIBI,function(x) 0.001*cumsum(x[x>0]) )
+h$BPM 		<- lapply(h$LiveIBI,function(x) 60*1000/x[x>0] )
+#cumulate interbeat intervals [exclude zeroes to match BPM lists]
+h$timeIBI	<- lapply(h$LiveIBI,function(x) 0.001*cumsum(x[x>0]) )
 #longest singular duration spent in high coherence
 #rle computes the lenghts of runs of equal values
 #we are looking for the longest run of "2" i.e. high coherence
 #0 = low coherence, 1 = medium coherence
 #converts length of high coherence runs to seconds by multiplying by Entrainment sampling interval (ms * 0.001 = seconds)
-h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime * sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
-
+h$maxhicoherence <- 0.001 * h$EntrainmentIntervalTime 
+			  * sapply(h$ZoneScore,function(x) with(rle(x==2),max(lengths[!!values==TRUE])))
 h$AverageBPM     <- sapply( h$BPM, mean )
 h$FinalScore     <- sapply( h$AccumZoneScore, function(x) x[length(x)] )
+
+# Time-domain analysis
+h$SDNN  <- sapply( h$LiveIBI, sd )
+h$pNN50 <- 100 * sapply( sapply( h$LiveIBI
+				, function(x) { abs(diff(x[x>0])) }) 
+			 , function(x) {length(x[x>50])/length(x)} )
 
 ##RHRV integration
 rr <- CreateHRVData(Verbose=TRUE)
@@ -147,7 +154,7 @@ hrvsummary <- function(level="") {
     if(!is.na(levels(h$ChallengeLevel)[level])) { level <- levels(h$ChallengeLevel)[level] }
 
     if(level %in% levels(h$ChallengeLevel)) {
-      #option to subset to one unique level
+      #option filtering to one unique level
       #e.g. we are only interested to see sessions at "highest" challenge level for fairer comparison
       h <- subset(h, h$ChallengeLevel == level)
     }
@@ -189,9 +196,19 @@ hrvexport <- function(x1="") {
   }
 }
 
-LoadBeatEmwave <- function(HRVData, RecordName, scale = 1, verbose = NULL) {
+LoadBeatEmwave <- function(HRVData, h, scale = 0.001, verbose = NULL) {
   #load HRVData from our own emwave import already in RAM
+  HRVData$datetime <- as.POSIXlt(h$date,format="%Y-%m-%d %X")
+  HRVData$Beat <- data.frame(Time = c(0,unlist(h$timeIBI)) * scale)
+  if (HRVData$Verbose) {
+    cat("** Loading beats positions for emwave record **\n")
+    cat("  Date:",strftime(HRVData$datetime,format="%d/%m/%Y"),"\n")
+    cat("  Time:",strftime(HRVData$datetime,format="%X"),"\n")
+    cat("  Number of beats:",length(HRVData$Beat$Time),"\n")
+  }
+  return(HRVData)
 }
+ 
 
 LoadBeatEMDB <- function(HRVData, RecordName, RecordPath = ".", scale = 1, verbose = NULL) {
   #load HRVData from emwave.emdb file for RHRV support
